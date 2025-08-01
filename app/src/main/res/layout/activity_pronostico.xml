@@ -2,18 +2,22 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/layoutPronostico"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="match_parent"
     android:orientation="vertical"
-    android:padding="16dp">
+    android:padding="16dp"
+    android:background="#EAF6FF">
 
     <TextView
         android:id="@+id/tvTituloPronostico"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="Pronóstico de 5 días"
-        android:textSize="18sp"
+        android:layout_height="wrap_content"
+        android:text="📅 Pronóstico de 5 Días"
+        android:textSize="24sp"
         android:textStyle="bold"
-        android:layout_gravity="center_horizontal"/>
+        android:textColor="#2C3E50"
+        android:gravity="center"
+        android:layout_marginBottom="16dp" />
+
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvPronostico"
@@ -21,7 +25,7 @@
         android:layout_height="0dp"
         android:layout_weight="1"
         android:clipToPadding="false"
-        android:paddingTop= "8dp"
-        android:paddingBottom= "8dp"/>
-
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:scrollbars="vertical" />
 </LinearLayout>

@@ -16,10 +16,12 @@ class PronosticoActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         binding = ActivityPronosticoBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         val ciudad = intent.getStringExtra("ciudad") ?: "Santiago"
+
         adapter = PronosticoAdapter(emptyList())
         binding.rvPronostico.layoutManager = LinearLayoutManager(this)
         binding.rvPronostico.adapter = adapter

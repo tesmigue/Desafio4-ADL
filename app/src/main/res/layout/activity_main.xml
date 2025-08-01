@@ -6,51 +6,94 @@
     android:layout_height="match_parent"
     android:padding="20dp"
     android:orientation="vertical"
-    android:background="#F0F8FF"
+    android:background="#EAF6FF"
     tools:context=".MainActivity">
 
-    <!-- Título de la app -->
-    <TextView
+
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="🌤️ Clima App"
-        android:textSize="28sp"
-        android:textStyle="bold"
-        android:textColor="#2C3E50"
-        android:gravity="center"
-        android:layout_marginBottom="24dp"
-        android:padding="16dp"
+        android:orientation="vertical"
+        android:padding="24dp"
         android:background="@android:color/white"
-        android:elevation="4dp" />
+        android:elevation="4dp"
+        android:layout_marginBottom="24dp">
 
-    <!-- Campo de entrada para ciudad -->
+        <TextView
+            android:id="@+id/tvCiudad"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="🌍 Ciudad"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:textColor="#2C3E50" />
+
+        <TextView
+            android:id="@+id/tvTemperatura"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="22°C"
+            android:textSize="64sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:textColor="#E74C3C"
+            android:layout_marginTop="8dp" />
+
+        <TextView
+            android:id="@+id/tvDescripcion"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="☀️ Cielo claro"
+            android:textSize="18sp"
+            android:gravity="center"
+            android:textColor="#7F8C8D"
+            android:layout_marginTop="4dp"
+            android:textStyle="italic" />
+
+        <Button
+            android:id="@+id/btnPronostico"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Ver Pronóstico 5 Días"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="12dp"
+            android:backgroundTint="#8E44AD"
+            android:textColor="@android:color/white"
+            android:paddingHorizontal="24dp"
+            android:paddingVertical="8dp"
+            android:elevation="4dp"
+            android:textSize="16sp" />
+
+    </LinearLayout>
+
+
     <EditText
         android:id="@+id/etCiudad"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="🔍 Buscar Ciudad"
+        android:hint="🔎 Buscar ciudad"
         android:inputType="text"
         android:drawableEnd="@android:drawable/ic_menu_search"
         android:imeOptions="actionSearch"
         android:padding="16dp"
         android:background="@android:color/white"
-        android:layout_marginBottom="16dp"
         android:elevation="2dp"
-        android:textSize="16sp" />
+        android:textSize="16sp"
+        android:layout_marginBottom="32dp" />
 
-    <!-- Botones de acción -->
+    <!-- 🔘 Botones ABAJO -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginBottom="24dp">
+        android:orientation="horizontal">
 
         <Button
             android:id="@+id/btnBuscar"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="🔍 Buscar Clima"
+            android:text="Buscar Clima"
             android:textSize="16sp"
             android:layout_marginEnd="8dp"
             android:backgroundTint="#3498DB"
@@ -61,68 +104,19 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="📍 Ubicación Actual"
+            android:text="Ubicación Actual"
             android:textSize="16sp"
             android:layout_marginStart="8dp"
             android:backgroundTint="#E67E22"
             android:textColor="@android:color/white" />
 
     </LinearLayout>
-
-    <!-- Card para mostrar información del clima -->
-    <LinearLayout
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvCiudades"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:background="@android:color/white"
-        android:padding="24dp"
-        android:elevation="8dp"
-        android:layout_marginTop="16dp">
+        android:layout_marginTop="16dp"/>
 
-        <TextView
-            android:id="@+id/tvCiudad"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="🏙️ Selecciona una ciudad"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:textColor="#2C3E50"
-            android:gravity="center"
-            android:layout_marginBottom="16dp" />
-
-        <TextView
-            android:id="@+id/tvTemperatura"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="🌡️ --°C"
-            android:textSize="54sp"
-            android:textStyle="bold"
-            android:textColor="#E74C3C"
-            android:gravity="center"
-            android:layout_marginBottom="12dp" />
-
-        <TextView
-            android:id="@+id/tvDescripcion"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="☁️ Busca una ciudad para ver el clima"
-            android:textSize="18sp"
-            android:textColor="#7F8C8D"
-            android:gravity="center"
-            android:textStyle="italic" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="👆 Toca Aqui para ver el pronostico de 5 dias"
-            android:textSize="18sp"
-            android:textColor="#7F8C8D"
-            android:gravity="center"
-            android:textStyle="italic"/>
-
-    </LinearLayout>
-
-    <!-- Espacio flexible -->
     <View
         android:layout_width="match_parent"
         android:layout_height="0dp"

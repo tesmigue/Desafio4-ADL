@@ -8,7 +8,7 @@ import com.tesmigue.climaapp.model.PronosticoResponse
 
 class ClimaRepository {
     private val api: ClimaApiService = RetrofitClient.instance.create(ClimaApiService::class.java)
-    private val apiKey = "26d1cc6e8785f9f5f6bdbd6d6f7b1527"
+    private val apiKey = "PON_LA_API_KEY_AQUI"
 
     companion object {
         private const val TAG = "ClimaRepository"
@@ -61,6 +61,15 @@ class ClimaRepository {
         } catch (e: Exception) {
             Log.e(TAG, "Excepción al obtener pronóstico", e)
             throw e
+        }
+    }
+
+    suspend fun obtenerClimaPorCoordenadas(lat: Double, lon: Double): ClimaResponse {
+        val response = api.getClimaPorCoordenadas(lat, lon, apiKey)
+        if (response.isSuccessful) {
+            return response.body() ?: throw Exception("Respuesta vacía")
+        } else {
+            throw Exception("Error: ${response.code()}")
         }
     }
 }

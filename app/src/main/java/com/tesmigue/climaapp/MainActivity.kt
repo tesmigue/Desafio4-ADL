@@ -3,181 +3,146 @@ package com.tesmigue.climaapp
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.location.Geocoder
 import android.os.Bundle
 import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import com.tesmigue.climaapp.PronosticoActivity
+import androidx.lifecycle.asLiveData
+import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.tesmigue.climaapp.adapter.CiudadAdapter
+import com.tesmigue.climaapp.data.AppDatabase
 import com.tesmigue.climaapp.databinding.ActivityMainBinding
+import com.tesmigue.climaapp.model.Ciudad
+import com.tesmigue.climaapp.repository.CiudadRepository
 import com.tesmigue.climaapp.repository.ClimaRepository
 import com.tesmigue.climaapp.utils.LocationHelper
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.util.Locale
 
 class MainActivity : AppCompatActivity() {
+
     private lateinit var binding: ActivityMainBinding
-    private lateinit var climaRepository: ClimaRepository
-    private val PERMISSIONS_REQUEST_LOCATION = 100
-    private var ultimaCiudadConsultada = ""
+    private lateinit var climaRepo: ClimaRepository
+    private lateinit var ciudadRepo: CiudadRepository
+    private lateinit var ciudadAdapter: CiudadAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        climaRepository = ClimaRepository()
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        val ciudadDao = AppDatabase.getDatabase(this).ciudadDao()
+        climaRepo = ClimaRepository()
+        ciudadRepo = CiudadRepository(ciudadDao)
 
-
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.layoutMain)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
-        }
-
-        setupClickListeners()
+        setupListeners()
+        setupRecyclerView()
     }
 
-    private fun setupClickListeners() {
+    private fun setupListeners() {
         binding.btnBuscar.setOnClickListener {
             val ciudad = binding.etCiudad.text.toString().trim()
-            if (ciudad.isNotBlank()) {
-                obtenerClima(ciudad)
+            if (ciudad.isNotEmpty()) {
+                buscarClima(ciudad)
+                guardarCiudad(ciudad)
             } else {
-                Toast.makeText(this, "Por favor, ingrese el nombre de una ciudad", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Ingresa una ciudad", Toast.LENGTH_SHORT).show()
             }
         }
-
+        binding.btnPronostico.setOnClickListener {
+            val ciudad = binding.etCiudad.text.toString().trim()
+            if (ciudad.isNotEmpty()) {
+                val intent = Intent(this, PronosticoActivity::class.java)
+                intent.putExtra("ciudad", ciudad)
+                startActivity(intent)
+            } else {
+                Toast.makeText(this, "Primero ingresa o busca una ciudad", Toast.LENGTH_SHORT).show()
+            }
+        }
         binding.btnUbicacion.setOnClickListener {
             solicitarPermisosUbicacion()
         }
-
-        // Click para abrir pronóstico
-        binding.tvCiudad.setOnClickListener {
-            if (ultimaCiudadConsultada.isNotEmpty()) {
-                abrirPronostico(ultimaCiudadConsultada)
-            } else {
-                Toast.makeText(this, "Primero busque el clima de una ciudad", Toast.LENGTH_SHORT).show()
-            }
-        }
     }
 
-    private fun obtenerClima(ciudad: String) {
-        CoroutineScope(Dispatchers.Main).launch {
+    private fun putExtra(s: String, ciudad: String) {
+
+    }
+
+    private fun buscarClima(ciudad: String) {
+        lifecycleScope.launch {
             try {
-                // Mostrar loading
-                binding.tvCiudad.text = "🔄 Cargando..."
-                binding.tvTemperatura.text = "--°C"
-                binding.tvDescripcion.text = "Obteniendo datos del clima..."
-
-                val climaResponse = climaRepository.obtenerClima(ciudad)
-
-                // Actualizar UI con datos obtenidos
-                binding.tvCiudad.text = "🏙️ ${climaResponse.nombre}"
-                binding.tvDescripcion.text = "☁️ ${climaResponse.weather[0].description.replaceFirstChar {
-                    if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
-                }}"
-                binding.tvTemperatura.text = "${climaResponse.main.temp.toInt()}°C"
-                ultimaCiudadConsultada = climaResponse.nombre
-
-                Toast.makeText(this@MainActivity, "Clima actualizado", Toast.LENGTH_SHORT).show()
-
-            } catch (e: Exception) {
-                // Manejar errores
-                binding.tvCiudad.text = "❌ Error"
-                binding.tvTemperatura.text = "--°C"
-                binding.tvDescripcion.text = "No se pudo obtener el clima"
-
-                val errorMessage = when {
-                    e.message?.contains("Sin conexión") == true -> "Sin conexión a internet"
-                    e.message?.contains("404") == true -> "Ciudad no encontrada"
-                    e.message?.contains("401") == true -> "Error de autenticación API"
-                    else -> "Error al obtener el clima: ${e.message}"
+                val clima = climaRepo.obtenerClima(ciudad)
+                binding.tvCiudad.text = "🏙️ ${clima.nombre}"
+                binding.tvTemperatura.text = "🌡️ ${clima.main.temp.toInt()}°C"
+                binding.tvDescripcion.text = clima.weather[0].description.replaceFirstChar {
+                    if (it.isLowerCase()) it.titlecase(Locale.ROOT) else it.toString()
                 }
-
-                Toast.makeText(this@MainActivity, errorMessage, Toast.LENGTH_LONG).show()
+            } catch (e: Exception) {
+                Toast.makeText(this@MainActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
     }
 
-    private fun abrirPronostico(ciudad: String) {
-        val intent = Intent(this, PronosticoActivity::class.java)
-        intent.putExtra("CIUDAD_NOMBRE", ciudad)
-        startActivity(intent)
+    private fun guardarCiudad(nombreCiudad: String) {
+        lifecycleScope.launch {
+            ciudadRepo.insertarCiudad(nombreCiudad)
+        }
+    }
+
+    private fun setupRecyclerView() {
+        binding.rvCiudades.layoutManager = LinearLayoutManager(this)
+        ciudadRepo.obtenerCiudadesFavoritas().asLiveData().observe(this) { lista ->
+            val adaptadas = lista.map { Ciudad(it.nombre) }
+            ciudadAdapter = CiudadAdapter(adaptadas) { ciudad ->
+                binding.etCiudad.setText(ciudad.nombre)
+                buscarClima(ciudad.nombre)
+            }
+            binding.rvCiudades.adapter = ciudadAdapter
+        }
     }
 
     private fun solicitarPermisosUbicacion() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-            != PackageManager.PERMISSION_GRANTED
+            == PackageManager.PERMISSION_GRANTED
         ) {
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-                PERMISSIONS_REQUEST_LOCATION
-            )
-        } else {
             obtenerUbicacion()
+        } else {
+            requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
         }
     }
 
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == PERMISSIONS_REQUEST_LOCATION &&
-            grantResults.isNotEmpty() &&
-            grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            obtenerUbicacion()
-        } else {
-            Toast.makeText(
-                this,
-                "Permiso de ubicación requerido para obtener clima actual",
-                Toast.LENGTH_LONG
-            ).show()
-        }
-    }
-
-    private fun obtenerUbicacion() {
-        binding.tvCiudad.text = "📍 Obteniendo ubicación..."
-        binding.tvTemperatura.text = "--°C"
-        binding.tvDescripcion.text = "Buscando su ubicación actual..."
-
-        LocationHelper.obtenerUbicacion(this) { location ->
-            if (location != null) {
-                val geocoder = Geocoder(this, Locale.getDefault())
-                try {
-                    val direcciones = geocoder.getFromLocation(location.latitude, location.longitude, 1)
-                    val ciudad = direcciones?.firstOrNull()?.locality ?: "Ciudad no encontrada"
-
-                    if (ciudad != "Ciudad no encontrada") {
-                        binding.etCiudad.setText(ciudad)
-                        obtenerClima(ciudad)
-                    } else {
-                        mostrarErrorUbicacion("No se pudo determinar la ciudad")
-                    }
-                } catch (e: Exception) {
-                    mostrarErrorUbicacion("Error al obtener nombre de la ciudad")
-                }
+    private val requestPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+            if (isGranted) {
+                obtenerUbicacion()
             } else {
-                mostrarErrorUbicacion("No se pudo obtener ubicación")
+                Toast.makeText(this, "Permiso de ubicación denegado", Toast.LENGTH_SHORT).show()
             }
         }
-    }
 
-    private fun mostrarErrorUbicacion(mensaje: String) {
-        binding.tvCiudad.text = "❌ Error de ubicación"
-        binding.tvTemperatura.text = "--°C"
-        binding.tvDescripcion.text = "Busca una ciudad manualmente"
-        Toast.makeText(this, mensaje, Toast.LENGTH_SHORT).show()
+    private fun obtenerUbicacion() {
+        LocationHelper.obtenerUbicacion(this) { location ->
+            if (location != null) {
+                lifecycleScope.launch {
+                    try {
+                        val clima = climaRepo.obtenerClimaPorCoordenadas(
+                            location.latitude,
+                            location.longitude
+                        )
+                        binding.tvCiudad.text = "📍 ${clima.nombre}"
+                        binding.tvTemperatura.text = "🌡️ ${clima.main.temp.toInt()}°C"
+                        binding.tvDescripcion.text = clima.weather[0].description
+                        guardarCiudad(clima.nombre)
+                    } catch (e: Exception) {
+                        Toast.makeText(this@MainActivity, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                    }
+                }
+            } else {
+                Toast.makeText(this, "No se pudo obtener ubicación", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 }
